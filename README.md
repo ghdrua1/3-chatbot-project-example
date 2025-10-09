@@ -47,7 +47,7 @@ python app.py
 ---
 
 ## 🧠 주요 기능  
-• 캐릭터별 독립 대화 인터페이스 (chatbot1 ~ chatbot5)  
+• 캐릭터별 독립 대화 인터페이스 (chatbot1 ~ chatbot4)  
 • OpenAI GPT 모델 기반 응답 생성  
 • RAG (Retrieval-Augmented Generation) 구조를 활용한 문서 검색  
 • .env 파일을 통한 API 키 관리  
@@ -66,14 +66,14 @@ python app.py
 │   ├── chatbot1/  
 │   ├── chatbot2/  
 │   ├── chatbot3/  
-│   ├── chatbot4/  
-│   ├── chatbot5/  
+│   ├── chatbot4/   
 │   └── .env — OpenAI API 키 파일  
 │  
 ├── static/ — 정적 파일 (CSS, JS, 이미지, 비디오 등)  
 │   ├── css/  
 │   ├── js/  
-│   └── images/  
+│   └── images/
+|   └── videos/ 
 │  
 └── templates/ — HTML 템플릿 (chat.html 등)  
 ```
