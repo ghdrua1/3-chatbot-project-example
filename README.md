@@ -57,6 +57,7 @@ python app.py
 ---
 
 ## 🧰 폴더 구조  
+```bash
 2-character-chat/  
 │  
 ├── app.py — Flask 메인 실행 파일  
@@ -76,7 +77,7 @@ python app.py
 │   └── images/  
 │  
 └── templates/ — HTML 템플릿 (chat.html 등)  
-
+```
 ---
 
 ## 🧪 실행 예시  
