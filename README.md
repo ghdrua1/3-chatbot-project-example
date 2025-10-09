@@ -1,5 +1,4 @@
-  
-## 🧠 2-character-chat Project 예시  
+# 🧠 2-character-chat Project 예시  
 OpenAI API + RAG 기반 캐릭터 챗봇 (2기 예시 프로젝트)  
 이 프로젝트는 OpenAI API와 RAG(Retrieval-Augmented Generation) 구조를 활용하여 여러 캐릭터가 각각의 개성을 가진 대화를 할 수 있도록 구현한 Flask 기반 챗봇 예제입니다.  
 
