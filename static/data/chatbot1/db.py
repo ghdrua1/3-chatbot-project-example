@@ -8,31 +8,35 @@ from chromadb.config import Settings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 
-# 환경변수 로드 및 API 키 설정
+# ========== 기본 설정 ==========
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # 항상 chatbot1 기준 경로로 고정
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 
-# OpenAI 클라이언트 초기화 (텍스트 임베딩용)
 client = OpenAI(api_key=api_key)
 
 # ========= DB 초기화 함수 =========
-# 텍스트 임베딩 DB 초기화 (예: 질문/답변 + 일반 텍스트)
-def init_text_db(db_path="./chardb_embedding"):
+def init_text_db(db_path="chardb_embedding"):
+    db_path = os.path.join(BASE_DIR, db_path)
+    os.makedirs(db_path, exist_ok=True)
     dbclient = chromadb.PersistentClient(path=db_path)
     collection = dbclient.create_collection(name="rag_collection", get_or_create=True)
     return dbclient, collection
 
-# 이미지 임베딩 DB 초기화 (예: 이미지 정보)
-def init_image_db(db_path="./imagedb_embedding"):
+def init_image_db(db_path="imagedb_embedding"):
+    db_path = os.path.join(BASE_DIR, db_path)
+    os.makedirs(db_path, exist_ok=True)
     dbclient = chromadb.PersistentClient(path=db_path)
     collection = dbclient.create_collection(name="rag_collection", get_or_create=True)
     return dbclient, collection
 
 # ========= 텍스트 데이터 처리 =========
 def load_text_files(folder_path):
-    """
-    지정한 폴더 내의 모든 .txt 파일을 읽어 (파일명, 내용) 튜플 형태로 반환.
-    """
+    folder_path = os.path.join(BASE_DIR, folder_path)
+    if not os.path.exists(folder_path):
+        print(f"⚠️ 경로 없음: {folder_path}, 폴더를 생성합니다.")
+        os.makedirs(folder_path, exist_ok=True)
+        return []
     docs = []
     for filename in os.listdir(folder_path):
         if filename.endswith(".txt"):
@@ -44,34 +48,22 @@ def load_text_files(folder_path):
     return docs
 
 def get_text_embedding(text, model="text-embedding-3-large"):
-    """
-    OpenAI API를 이용해 텍스트 임베딩 생성.
-    """
     response = client.embeddings.create(input=[text], model=model)
     return response.data[0].embedding
 
 def parse_qa_blocks(filename, raw_text):
-    """
-    '키워드:', '질문:', '답변:' 형식의 Q&A 블록을 파싱하여
-    (질문+키워드 텍스트, 답변, 메타데이터) 튜플 리스트로 반환.
-    """
     blocks = []
-    # 각 Q&A 블록은 빈 줄로 구분한다.
     for raw in raw_text.strip().split("\n\n"):
         lines = raw.strip().split("\n")
-        keywords = []
-        questions = []
-        answer = ""
+        keywords, questions, answer = [], [], ""
         for line in lines:
             if line.startswith("키워드:"):
-                raw_keywords = line.replace("키워드:", "").strip()
-                keywords = [kw.strip() for kw in raw_keywords.split(",") if kw.strip()]
+                keywords = [kw.strip() for kw in line.replace("키워드:", "").split(",") if kw.strip()]
             elif line.startswith("질문:"):
                 questions.append(line.replace("질문:", "").strip())
             elif line.startswith("답변:"):
                 answer = line.replace("답변:", "").strip()
         if questions and answer:
-            # 임베딩 텍스트는 질문과 키워드를 결합
             embedding_text = " ".join(keywords + questions)
             metadata = {
                 "type": "qa_block",
@@ -82,36 +74,31 @@ def parse_qa_blocks(filename, raw_text):
             blocks.append((embedding_text, answer, metadata))
     return blocks
 
-# 일반 텍스트 파일을 일정 길이로 청킹하기 위한 텍스트 분할기
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=50)
 
 # ========= 이미지 데이터 처리 =========
 def load_json_mapping(file_path):
-    """
-    JSON 파일을 읽어 이미지 매핑 데이터를 반환.
-    """
+    file_path = os.path.join(BASE_DIR, file_path)
+    if not os.path.exists(file_path):
+        print(f"⚠️ JSON 파일 없음: {file_path}")
+        return {}
     with open(file_path, "r", encoding="utf-8") as f:
-        mapping = json.load(f)
-    return mapping
+        return json.load(f)
 
 def get_image_embedding(text, embedder):
-    """
-    LangChain의 OpenAIEmbeddings를 이용하여 텍스트 임베딩 생성.
-    """
     return embedder.embed_query(text)
 
 # ========= 실행 =========
 if __name__ == "__main__":
     # -- 텍스트 데이터 임베딩 처리 --
-    # 텍스트 파일들이 위치한 폴더 (예: 질문답변식.txt 등 포함)
-    text_folder_path = "./chardb_text"
+    text_folder_path = "chardb_text"
     docs = load_text_files(text_folder_path)
-    
-    dbclient, text_collection = init_text_db("./chardb_embedding")
+
+    dbclient, text_collection = init_text_db("chardb_embedding")
     doc_id = 0
+
     for filename, text in docs:
         if filename == "질문답변식.txt":
-            # Q&A 형식 파일 처리
             qa_blocks = parse_qa_blocks(filename, text)
             for emb_text, answer, metadata in qa_blocks:
                 doc_id += 1
@@ -123,7 +110,6 @@ if __name__ == "__main__":
                     ids=[str(doc_id)]
                 )
         else:
-            # 일반 텍스트 파일을 청크 단위로 처리
             chunks = text_splitter.split_text(text)
             for idx, chunk in enumerate(chunks):
                 doc_id += 1
@@ -138,18 +124,14 @@ if __name__ == "__main__":
                     }],
                     ids=[str(doc_id)]
                 )
-    print("질문답변 블록 + 일반 텍스트 청킹 및 임베딩 완료!")
-    
+
+    print("✅ 질문답변 블록 + 일반 텍스트 임베딩 완료!")
+
     # -- 이미지 데이터 임베딩 처리 --
-    image_dbclient, image_collection = init_image_db("./imagedb_embedding")
-    
-    # 이미지 임베딩용 embedder 초기화 (langchain OpenAIEmbeddings 사용)
+    image_dbclient, image_collection = init_image_db("imagedb_embedding")
     embedder = OpenAIEmbeddings(model="text-embedding-3-large")
-    
-    # 이미지 매핑 JSON 파일 경로 (예: photo_data.json)
-    json_path = "imagedb_text/photo_data.json"
-    mapping = load_json_mapping(json_path)
-    
+    mapping = load_json_mapping("imagedb_text/photo_data.json")
+
     doc_id_image = 0
     for key, description in mapping.items():
         doc_id_image += 1
@@ -160,4 +142,5 @@ if __name__ == "__main__":
             metadatas=[{"key": key, "description": description}],
             ids=[str(doc_id_image)]
         )
-    print("모든 이미지 매핑 데이터의 임베딩 벡터를 DB에 저장 완료")
+
+    print("✅ 모든 이미지 매핑 데이터의 임베딩 완료!")

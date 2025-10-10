@@ -29,7 +29,7 @@ pip install -r requirements.txt
 ---
 
 ## 🔑 OpenAI API 키 설정  
-1. generation/ 폴더 내부에 .env 파일을 생성  
+1. 3-chatbot-project-example 루트에 .env 파일을 생성  
 2. 아래 내용 입력  
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx  
 
@@ -37,8 +37,9 @@ OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 
 ---
 
-## 🚀 실행 방법  
-python app.py  
+## 🚀 실행 방법
+1. python makedb.py
+2. python app.py  
 
 콘솔 출력 예시  
 * Running on http://127.0.0.1:5000  
@@ -57,17 +58,18 @@ python app.py
 
 ## 🧰 폴더 구조  
 ```bash
-2-character-chat/  
+3-chatbot-project-example  
 │  
 ├── app.py — Flask 메인 실행 파일  
 ├── requirements.txt — 의존성 패키지 목록  
-│  
+├── makedb.py - 모든 벡터디비 파일 실행
+├── .env — OpenAI API 키 파일 
 ├── generation/ — 캐릭터별 챗봇 로직  
 │   ├── chatbot1/  
 │   ├── chatbot2/  
 │   ├── chatbot3/  
 │   ├── chatbot4/   
-│   └── .env — OpenAI API 키 파일  
+│    
 │  
 ├── static/ — 정적 파일 (CSS, JS, 이미지, 비디오 등)  
 │   ├── css/  
